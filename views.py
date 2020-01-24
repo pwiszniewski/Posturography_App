@@ -85,7 +85,7 @@ class LivePlotView(QWidget):
         return self.x_min, self.x_max
 
     def update_canvas(self):
-        self.x, self.y = self.data_obj.getData()
+        self.x, self.y = self.data_obj.get_meas()
         # print(self.x[:3], self.y[0, :3])
         self.fig.axes.clear()
         # self.fig.canvas.draw()
@@ -296,7 +296,7 @@ class COPView(QWidget):
         return self.x_min, self.x_max
 
     def update_canvas(self):
-        self.xy_cop = self.data_obj.getCop()
+        self.xy_cop = self.data_obj.get_cop()
         nx_P, ny_P, nx_L, ny_L, nx_all, ny_all = 0, 1, 2, 3, 4, 5
         # print(self.y[:, -1])
         # self.fig.canvas.draw()

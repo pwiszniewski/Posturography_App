@@ -31,17 +31,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.nsamp = 12000
         self.nch = 6
+        self.fs = 100
         # self.t_data = data.TimesData()
         # self.meas_data = data.MeasurementsData(nch)
         # self.cop_data = data.CopData(nsamp)
 
-        self.t_data = data.TimesData(self.nsamp)
-        self.meas_data = data.MeasurementsData(self.nch, self.nsamp)
-        self.cop_data = data.CopData(self.nsamp)
+        # self.t_data = data.TimesData(self.nsamp)
+        # self.meas_data = data.MeasurementsData(self.nch, self.nsamp)
+        # self.cop_data = data.CopData(self.nsamp)
+
+        self.data_cntrl = data.DataController(self.nch, self.nsamp, self.fs)
 
         self.central_layout = QVBoxLayout()
         self.central_widget = QWidget()
-        self.plot_widget = views.COPView(self.x, self.meas_data.y_raw, self)
+        self.plot_widget = views.COPView(self.x, self.data_cntrl.meas_data.y_raw, self.data_cntrl)
         self.cop_plot_settings = []
         # self.liveplot_view = views.LivePlotView(self.x, self.y)
         self.central_layout.addWidget(self.plot_widget)
@@ -58,10 +61,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.btn_show_liveplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_liveplot))
         self.btn_show_copplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_copplot))
 
-        rs = widgets.QRangeSlider()
-        # rs.show()
-        self.btn = QPushButton("Liveplot")
-        # self.central_layout.addWidget(rs)
+        # self.btn = QPushButton("Liveplot")
 
         self.timer = QTimer()
         # static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
@@ -73,11 +73,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.is_conn = False
         self.search_connection()
 
-        self.fs = 100
-        self.y_raw = []
-        self.y_trans = []
-        self.xy_cop = []
-        self.times = []
+
+
         self.run = False
         self.cnt = 0
         self.nsamp_view = 0
@@ -124,7 +121,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def set_central_widget(self, btn):
         if btn is self.btn_show_liveplot:
-            new_widget = views.LivePlotView(*self.getDataRaw(), self)
+            new_widget = views.LivePlotView(*self.data_cntrl.get_meas(), self.data_cntrl)
             self.cop_plot_settings = self.plot_widget.get_settings()
         elif btn is self.btn_show_copplot:
             new_widget = views.COPView(*self.getDataRaw(), self)
@@ -168,31 +165,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
 
-    def getData(self):
-        # print('getdata')
-        if self.run:
-            return self.t_data.t[-self.nsamp_view:-1], self.meas_data.y_trans[:, -self.nsamp_view:-1]
-        else:
-            return self.times, self.y_trans
 
-    def getDataRaw(self):
-        # print('getDataRaw')
-        if self.run:
-            return self.t_data.t[-self.nsamp_view:-1], self.meas_data.y_raw[:, -self.nsamp_view:-1]
-        else:
-            return self.times, self.y_raw
-
-    def getCop(self):
-        if self.run:
-            return self.cop_data.xyc[:, -self.nsamp_view:]
-        else:
-            return self.xy_cop
-
-    def getTimes(self):
-        if self.run:
-            return self.t_data.t[-self.nsamp_view:-1]
-        else:
-            return self.times
 
     def search_connection(self):
         port_list = protocols.get_ports_list()
@@ -226,7 +199,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port_act_group.triggered.connect(lambda action: self.set_port(action.text()))
 
         # if self.port is not None:
-
 
     def try_connect(self):
         result = False
@@ -265,9 +237,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.times = []
         self.cnt = 0
         self.nsamp_view = 0
-        self.t_data = data.TimesData(self.nsamp)
-        self.meas_data = data.MeasurementsData(self.nch, self.nsamp)
-        self.cop_data = data.CopData(self.nsamp)
+        self.data_cntrl.t_data = data.TimesData(self.nsamp)
+        self.data_cntrl.meas_data = data.MeasurementsData(self.nch, self.nsamp)
+        self.data_cntrl.cop_data = data.CopData(self.nsamp)
         self.run = True
         worker = Worker(self.makeMeasurements)  # Any other args, kwargs are passed to the run function
         # self.serial_thread = threading.Thread(target=self.makeMeasurements)
@@ -303,9 +275,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.nsamp_view = self.nsamp_view_max
                 else:
                     self.nsamp_view = self.cnt - 1
-                self.t_data.append(self.cnt * 1000 / self.fs)
-                self.meas_data.append(samples)
-                self.cop_data.append(self.meas_data)
+                self.data_cntrl.t_data.append(self.cnt * 1000 / self.fs)
+                self.data_cntrl.meas_data.append(samples)
+                self.data_cntrl.cop_data.append(self.data_cntrl.meas_data)
                 if self.cnt % self.nsamp == 0:
                     self.append_chunk_data()
             else:
@@ -313,17 +285,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ser.flushInput()
 
     def append_chunk_data(self):
-        self.y_raw.append(self.meas_data.y_raw)
-        self.y_trans.append(self.meas_data.y_trans)
-        self.times.append(self.t_data.t)
-        self.xy_cop.append(self.cop_data.xyc)
+        self.y_raw.append(self.data_cntrl.meas_data.y_raw)
+        self.y_trans.append(self.data_cntrl.meas_data.y_trans)
+        self.times.append(self.data_cntrl.t_data.t)
+        self.xy_cop.append(self.data_cntrl.cop_data.xyc)
 
     def concatenate_data(self):
         split = - (self.cnt % self.nsamp)
-        self.y_raw.append(self.meas_data.y_raw[:, split:])
-        self.y_trans.append(self.meas_data.y_trans[:, split:])
-        self.times.append(self.t_data.t[split:])
-        self.xy_cop.append(self.cop_data.xyc[:, split:])
+        self.y_raw.append(self.data_cntrl.meas_data.y_raw[:, split:])
+        self.y_trans.append(self.data_cntrl.meas_data.y_trans[:, split:])
+        self.times.append(self.data_cntrl.t_data.t[split:])
+        self.xy_cop.append(self.data_cntrl.cop_data.xyc[:, split:])
         self.y_raw = np.concatenate(self.y_raw, axis=1)
         self.y_trans = np.concatenate(self.y_trans, axis=1)
         self.xy_cop = np.concatenate(self.xy_cop, axis=1)

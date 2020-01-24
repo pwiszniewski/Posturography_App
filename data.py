@@ -3,26 +3,60 @@ import numpy as np
 
 
 class DataController:
-    def __init__(self, nchann, nsamp):
+    def __init__(self, nchann, nsamp, fs):
         self.t_data = TimesData(nsamp)
         self.meas_data = MeasurementsData(nchann, nsamp)
         self.cop_data = CopData(nsamp)
+        self.fs = fs
         self.cnt = 0
 
-    def append_measurement(self, samples):
+        self.y_raw = []
+        self.y_trans = []
+        self.xy_cop = []
+        self.times = []
+
+    def append_meas(self, samples):
         self.cnt += 1
         self.t_data.append(self.cnt)
         self.meas_data.append(samples)
         self.cop_data.append(self.meas_data)
 
     def get_meas(self):
-        return self.meas_data.y_trans
+        return self.t_data.t, self.meas_data.y_trans
+        # print('getdata')
+        # if self.run:
+        #     return self.t_data.t[-nsamp:-1], self.meas_data.y_trans[:, -nsamp:-1]
+        # else:
+        #     return self.times, self.y_trans
 
     def get_meas_raw(self):
-        return self.meas_data.y_raw
+        # print('getDataRaw')
+        if self.run:
+            return self.data_cntrl.t_data.t[-nsamp:-1], self.meas_data.y_raw[:, -nsamp:-1]
+        else:
+            return self.times, self.y_raw
 
-    def get_times(self):
-        return self.t_data.t
+    def get_cop(self):
+        return self.cop_data.xyc
+        # if self.run:
+        #     return self.cop_data.xyc[:, -nsamp:]
+        # else:
+        #     return self.xy_cop
+
+    def get_times(self, nsamp):
+        if self.run:
+            return self.t_data.t[-nsamp:-1]
+        else:
+            return self.times
+
+    # def get_meas(self):
+    #     return self.meas_data.y_trans
+    #
+    # def get_meas_raw(self):
+    #     return self.meas_data.y_raw
+    #
+    # def get_times(self):
+    #     return self.t_data.t
 
 # @dataclass
 # class MeasurementsData:
