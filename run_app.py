@@ -275,9 +275,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.nsamp_view = self.nsamp_view_max
                 else:
                     self.nsamp_view = self.cnt - 1
-                self.data_cntrl.t_data.append(self.cnt * 1000 / self.fs)
-                self.data_cntrl.meas_data.append(samples)
-                self.data_cntrl.cop_data.append(self.data_cntrl.meas_data)
+                # self.data_cntrl.t_data.append(self.cnt * 1000 / self.fs)
+                # self.data_cntrl.meas_data.append(samples)
+                # self.data_cntrl.cop_data.append(self.data_cntrl.meas_data)
+                self.data_cntrl.append_meas(samples)
                 if self.cnt % self.nsamp == 0:
                     self.append_chunk_data()
             else:

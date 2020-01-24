@@ -17,12 +17,12 @@ class DataController:
 
     def append_meas(self, samples):
         self.cnt += 1
-        self.t_data.append(self.cnt)
+        self.t_data.append(self.cnt * 1000 / self.fs)
         self.meas_data.append(samples)
         self.cop_data.append(self.meas_data)
 
     def get_meas(self):
-        return self.t_data.t, self.meas_data.y_trans
+        return self.t_data.t[-self.cnt:], self.meas_data.y_trans[:, -self.cnt:]
         # print('getdata')
         # if self.run:
         #     return self.t_data.t[-nsamp:-1], self.meas_data.y_trans[:, -nsamp:-1]
@@ -37,7 +37,7 @@ class DataController:
             return self.times, self.y_raw
 
     def get_cop(self):
-        return self.cop_data.xyc
+        return self.cop_data.xyc[:, -self.cnt:]
         # if self.run:
         #     return self.cop_data.xyc[:, -nsamp:]
         # else:
