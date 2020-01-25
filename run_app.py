@@ -73,8 +73,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.is_conn = False
         self.search_connection()
 
-
-
         self.run = False
         self.cnt = 0
         self.nsamp_view = 0
@@ -165,8 +163,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
 
-
-
     def search_connection(self):
         port_list = protocols.get_ports_list()
         if len(port_list) == 1:
@@ -230,16 +226,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if not self.is_conn:
             return
-
-        self.y_raw = []
-        self.y_trans = []
-        self.xy_cop = []
-        self.times = []
-        self.cnt = 0
+        self.data_cntrl.clear_data()
         self.nsamp_view = 0
-        self.data_cntrl.t_data = data.TimesData(self.nsamp)
-        self.data_cntrl.meas_data = data.MeasurementsData(self.nch, self.nsamp)
-        self.data_cntrl.cop_data = data.CopData(self.nsamp)
         self.run = True
         worker = Worker(self.makeMeasurements)  # Any other args, kwargs are passed to the run function
         # self.serial_thread = threading.Thread(target=self.makeMeasurements)
@@ -248,15 +236,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Execute
         # self.serial_thread.start()
         self.threadpool.start(worker)
-        self.timer.start(1000 / self.ref_rate)
+        self.timer.start(int(1000 / self.ref_rate))
         self.meas_time_timer.start(1000)
         self.setWindowTitle('Making measurements')
         # self.central_widget.startUpdating()
 
     def makeMeasurements(self):
-        import serial
         nch = 6
-
         # x = np.linspace(0, nsamp_view, nsamp_view + 1)[0:-1]
         self.meas_start_time = QTime.currentTime()
         # set up the serial line
@@ -275,32 +261,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.nsamp_view = self.nsamp_view_max
                 else:
                     self.nsamp_view = self.cnt - 1
-                # self.data_cntrl.t_data.append(self.cnt * 1000 / self.fs)
-                # self.data_cntrl.meas_data.append(samples)
-                # self.data_cntrl.cop_data.append(self.data_cntrl.meas_data)
                 self.data_cntrl.append_meas(samples)
-                if self.cnt % self.nsamp == 0:
-                    self.append_chunk_data()
             else:
                 print('!', samples)
                 self.ser.flushInput()
-
-    def append_chunk_data(self):
-        self.y_raw.append(self.data_cntrl.meas_data.y_raw)
-        self.y_trans.append(self.data_cntrl.meas_data.y_trans)
-        self.times.append(self.data_cntrl.t_data.t)
-        self.xy_cop.append(self.data_cntrl.cop_data.xyc)
-
-    def concatenate_data(self):
-        split = - (self.cnt % self.nsamp)
-        self.y_raw.append(self.data_cntrl.meas_data.y_raw[:, split:])
-        self.y_trans.append(self.data_cntrl.meas_data.y_trans[:, split:])
-        self.times.append(self.data_cntrl.t_data.t[split:])
-        self.xy_cop.append(self.data_cntrl.cop_data.xyc[:, split:])
-        self.y_raw = np.concatenate(self.y_raw, axis=1)
-        self.y_trans = np.concatenate(self.y_trans, axis=1)
-        self.xy_cop = np.concatenate(self.xy_cop, axis=1)
-        self.times = np.concatenate(self.times)
 
     def save_data_csv(self):
         fpath = QFileDialog.getSaveFileName(self, 'Save File', '', "CSV files (*.csv)")[0]
@@ -335,13 +299,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.stop()
         self.meas_time_timer.stop()
         self.run = False
-        try:
-            self.ser.close()
-            self.concatenate_data()
-            self.plot_widget.show_slider(0, self.cnt)
-            self.plot_widget.update_canvas()
-        except:
-            pass
+        # try:
+        self.ser.close()
+        print('concat')
+        self.data_cntrl.concatenate_data()
+        self.plot_widget.show_slider(0, self.cnt)
+        print('update_canvas')
+        self.plot_widget.update_canvas()
+        # except:
+        #     pass
 
     def showTime(self):
         seconds = self.meas_start_time.secsTo(QTime.currentTime())

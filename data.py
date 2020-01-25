@@ -9,6 +9,9 @@ class DataController:
         self.cop_data = CopData(nsamp)
         self.fs = fs
         self.cnt = 0
+        self.nsamp = nsamp
+        self.nchann = nchann
+        self.concat = False
 
         self.y_raw = []
         self.y_trans = []
@@ -21,13 +24,49 @@ class DataController:
         self.meas_data.append(samples)
         self.cop_data.append(self.meas_data)
 
+        if self.cnt % self.nsamp == 0:
+            self.append_chunk_data()
+
+    def append_chunk_data(self):
+        print('append_chunk_data')
+        self.y_raw.append(self.meas_data.y_raw)
+        self.y_trans.append(self.meas_data.y_trans)
+        self.times.append(self.t_data.t)
+        self.xy_cop.append(self.cop_data.xyc)
+
+    def concatenate_data(self):
+        print('concatenate_data')
+        split = - (self.cnt % self.nsamp)
+        self.y_raw.append(self.meas_data.y_raw[:, split:])
+        self.y_trans.append(self.meas_data.y_trans[:, split:])
+        self.times.append(self.t_data.t[split:])
+        self.xy_cop.append(self.cop_data.xyc[:, split:])
+        self.y_raw = np.concatenate(self.y_raw, axis=1)
+        self.y_trans = np.concatenate(self.y_trans, axis=1)
+        self.xy_cop = np.concatenate(self.xy_cop, axis=1)
+        self.times = np.concatenate(self.times)
+        self.concat = True
+
+    def clear_data(self):
+        self.y_raw = []
+        self.y_trans = []
+        self.xy_cop = []
+        self.times = []
+        self.cnt = 0
+        self.t_data = TimesData(self.nsamp)
+        self.meas_data = MeasurementsData(self.nchann, self.nsamp)
+        self.cop_data = CopData(self.nsamp)
+        self.concat = False
+
     def get_meas(self):
-        return self.t_data.t[-self.cnt:], self.meas_data.y_trans[:, -self.cnt:]
+        if not self.concat:
+            return self.t_data.t[-self.cnt:], self.meas_data.y_trans[:, -self.cnt:]
+        else:
+            return self.times, self.y_trans
         # print('getdata')
         # if self.run:
         #     return self.t_data.t[-nsamp:-1], self.meas_data.y_trans[:, -nsamp:-1]
-        # else:
-        #     return self.times, self.y_trans
+
 
     def get_meas_raw(self):
         # print('getDataRaw')
