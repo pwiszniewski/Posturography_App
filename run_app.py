@@ -132,7 +132,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.timer.timeout.connect(new_widget.update_canvas)
         else:
             new_widget.update_canvas()
-            new_widget.show_slider(0, self.cnt)
+            new_widget.show_slider(0, self.data_cntrl.cnt)
+            new_widget.show_slider(0, self.data_cntrl.cnt)
             # print(self.plot_widget.get_view_range())
             new_widget.slider.setRange(*self.plot_widget.get_view_range())
             # new_widget.slider.repaint()
@@ -153,6 +154,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def set_autoscale_view(self, val):
         self.autoscale_view = val
         self.plot_widget.set_autoscale(self.autoscale_view)
+        self.plot_widget.update_canvas()
 
     def set_view_range(self, nsamp):
         self.nsamp_view_max = nsamp
@@ -242,12 +244,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.central_widget.startUpdating()
 
     def makeMeasurements(self):
-        nch = 6
-        # x = np.linspace(0, nsamp_view, nsamp_view + 1)[0:-1]
         self.meas_start_time = QTime.currentTime()
-        # set up the serial line
         self.ser.flushInput()
-        # time.sleep(2)
         self.ser.readline()
         while self.run:
             ''' Read and add '''
@@ -255,7 +253,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             sep = b.split()
             samples = np.array([int(s) for s in sep], dtype=np.uint16)
             # print(samples)
-            if len(sep) == nch:
+            if len(sep) == self.nch:
                 self.cnt += 1
                 if self.cnt > self.nsamp_view_max:
                     self.nsamp_view = self.nsamp_view_max
@@ -269,15 +267,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def save_data_csv(self):
         fpath = QFileDialog.getSaveFileName(self, 'Save File', '', "CSV files (*.csv)")[0]
         if fpath is not '':
-            df_times = pd.DataFrame()
-            df_times['sample'] = self.times
-            # df_times[['0', '1', '2', '3', '4', '5']] = self.y_raw.T
-            df_y_raw = pd.DataFrame.from_records(self.y_raw.T, columns=['raw_'+str(i) for i in range(self.nch)])
-            print(np.shape(self.y_raw))
-            df_y_trans = pd.DataFrame.from_records(self.y_trans.T, columns=['press_'+str(i) for i in range(self.nch)])
-            df_cop = pd.DataFrame.from_records(self.xy_cop.T, columns=['cop_x_r', 'cop_y_r', 'cop_x_l', 'cop_x_r',
-                                                                             'cop_x_all', 'cop_y_all'])
-            df = pd.concat([df_times, df_y_raw, df_y_trans, df_cop], axis=1, sort=False)
+            df = self.data_cntrl.to_dataframe()
             df.to_csv(fpath, float_format='%g')
 
     def open_data_csv(self):
@@ -285,14 +275,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if fpath is not '':
             self.setWindowTitle(fpath)
             df = pd.read_csv(fpath)
-            self.times = df['sample'].to_numpy()
-            self.y_raw = df[['raw_'+str(i) for i in range(self.nch)]].to_numpy().T
-            self.y_trans = df[['press_'+str(i) for i in range(self.nch)]].to_numpy().T
-            self.xy_cop = df[['cop_x_r', 'cop_y_r', 'cop_x_l', 'cop_x_r', 'cop_x_all', 'cop_y_all']].to_numpy().T
+            self.data_cntrl.from_dataframe(df)
             # print(np.shape(self.y_raw))
-            self.cnt = len(self.times)
             self.plot_widget.update_canvas()
-            self.plot_widget.show_slider(0, self.cnt)
+            self.plot_widget.show_slider(0, self.data_cntrl.cnt)
 
     def stopMeasure(self):
         self.timer.timeout.disconnect(self.plot_widget.update_canvas)
@@ -301,10 +287,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.run = False
         # try:
         self.ser.close()
-        print('concat')
         self.data_cntrl.concatenate_data()
         self.plot_widget.show_slider(0, self.cnt)
-        print('update_canvas')
         self.plot_widget.update_canvas()
         # except:
         #     pass

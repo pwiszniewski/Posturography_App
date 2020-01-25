@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
-
+import pandas as pd
 
 class DataController:
     def __init__(self, nchann, nsamp, fs):
@@ -88,6 +88,23 @@ class DataController:
         else:
             return self.times
 
+    def to_dataframe(self):
+        df_times = pd.DataFrame()
+        df_times['sample'] = self.times
+        df_y_raw = pd.DataFrame.from_records(self.y_raw.T, columns=['raw_' + str(i) for i in range(self.nchann)])
+        df_y_trans = pd.DataFrame.from_records(self.y_trans.T, columns=['press_' + str(i) for i in range(self.nchann)])
+        df_cop = pd.DataFrame.from_records(self.xy_cop.T, columns=['cop_x_r', 'cop_y_r', 'cop_x_l', 'cop_x_r',
+                                                                   'cop_x_all', 'cop_y_all'])
+        df = pd.concat([df_times, df_y_raw, df_y_trans, df_cop], axis=1, sort=False)
+        return df
+
+    def from_dataframe(self, df):
+        self.times = df['sample'].to_numpy()
+        self.y_raw = df[['raw_' + str(i) for i in range(self.nchann)]].to_numpy().T
+        self.y_trans = df[['press_' + str(i) for i in range(self.nchann)]].to_numpy().T
+        self.xy_cop = df[['cop_x_r', 'cop_y_r', 'cop_x_l', 'cop_x_r', 'cop_x_all', 'cop_y_all']].to_numpy().T
+        self.cnt = len(self.times)
+        self.concat = True
     # def get_meas(self):
     #     return self.meas_data.y_trans
     #
