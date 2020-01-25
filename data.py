@@ -58,9 +58,10 @@ class DataController:
         self.cop_data = CopData(self.nsamp)
         self.concat = False
 
-    def get_meas(self):
+    def get_meas(self, nsamp):
+        slice = min(nsamp, self.cnt)
         if not self.concat:
-            return self.t_data.t[-self.cnt:], self.meas_data.y_trans[:, -self.cnt:]
+            return self.t_data.t[-slice:], self.meas_data.y_trans[:, -slice:]
         else:
             return self.times, self.y_trans
         # print('getdata')
@@ -75,8 +76,9 @@ class DataController:
         else:
             return self.times, self.y_raw
 
-    def get_cop(self):
-        return self.cop_data.xyc[:, -self.cnt:]
+    def get_cop(self, nsamp):
+        slice = min(nsamp, self.cnt)
+        return self.cop_data.xyc[:, -slice:]
         # if self.run:
         #     return self.cop_data.xyc[:, -nsamp:]
         # else:

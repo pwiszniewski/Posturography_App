@@ -25,7 +25,7 @@ class NavigationToolbar(NavigationToolbar2QT):
                  t[0] is not 'Subplots']
 
 class LivePlotView(QWidget):
-    def __init__(self, x, y, data_obj, autoscale=False, *args, **kwargs):
+    def __init__(self, x, y, data_obj, nsamp_view, autoscale=False, *args, **kwargs):
         super(LivePlotView, self).__init__(*args, **kwargs)
 
         self.data_obj = data_obj
@@ -56,7 +56,7 @@ class LivePlotView(QWidget):
 
         chnames = ['P|PIĘTA', 'P|ZEW', 'P|WEW', 'L|PIĘTA', 'L|ZEW', 'L|WEW']
         colors = ['#e866c5', 'g', 'b', '#d466e8', 'orange', '#fff740']
-        nsamp_view = 500
+        self.nsamp_view = nsamp_view
         self.y_lim = (0, 500)
         self.autoscale = autoscale
         self.plot = plots.LivePlot(self._dynamic_ax, self.x, self.y, nch, self.y_lim, colors, chnames, self.autoscale)
@@ -85,7 +85,7 @@ class LivePlotView(QWidget):
         return self.x_min, self.x_max
 
     def update_canvas(self):
-        self.x, self.y = self.data_obj.get_meas()
+        self.x, self.y = self.data_obj.get_meas(self.nsamp_view)
         # print(self.x[:3], self.y[0, :3])
         self.fig.axes.clear()
         # self.fig.canvas.draw()
@@ -110,6 +110,7 @@ class LivePlotView(QWidget):
         self.plot.set_autoscale(val)
         if not self.autoscale:
             self.plot.set_y_lim(self.y_lim)
+        self.update_canvas()
 
 
     # def startUpdating(self):
@@ -118,7 +119,7 @@ class LivePlotView(QWidget):
 
 
 class COPView(QWidget):
-    def __init__(self, x, y, data_obj, autoscale=False, *args, **kwargs):
+    def __init__(self, x, y, data_obj, nsamp_view, autoscale=False, *args, **kwargs):
         super(COPView, self).__init__(*args, **kwargs)
 
         self.data_obj = data_obj
@@ -232,7 +233,7 @@ class COPView(QWidget):
         self.x = x
         self.y = y
 
-        nsamp_view = 500
+        self.nsamp_view = nsamp_view
 
         hist_size_lr = [9, 9]
         x_min_lr, x_max_lr = -10, 10
@@ -296,7 +297,7 @@ class COPView(QWidget):
         return self.x_min, self.x_max
 
     def update_canvas(self):
-        self.xy_cop = self.data_obj.get_cop()
+        self.xy_cop = self.data_obj.get_cop(self.nsamp_view)
         nx_P, ny_P, nx_L, ny_L, nx_all, ny_all = 0, 1, 2, 3, 4, 5
         # print(self.y[:, -1])
         # self.fig.canvas.draw()
@@ -364,6 +365,7 @@ class COPView(QWidget):
             self.plot_COP_global.set_xy_lim(self.x_lim_g, self.y_lim_g)
             self.plot_COP_left.set_xy_lim(self.x_lim_lr, self.y_lim_lr)
             self.plot_COP_right.set_xy_lim(self.x_lim_lr, self.y_lim_lr)
+        self.update_canvas()
 
     # def show_slider(self):
     #     self.slider = widgets.QRangeSlider()

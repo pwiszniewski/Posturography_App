@@ -32,6 +32,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.nsamp = 12000
         self.nch = 6
         self.fs = 100
+        view_ranges = [1000, 3000, 6000, 12000]
+        self.nsamp_view = view_ranges[2]
         # self.t_data = data.TimesData()
         # self.meas_data = data.MeasurementsData(nch)
         # self.cop_data = data.CopData(nsamp)
@@ -44,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.central_layout = QVBoxLayout()
         self.central_widget = QWidget()
-        self.plot_widget = views.COPView(self.x, self.data_cntrl.meas_data.y_raw, self.data_cntrl)
+        self.plot_widget = views.COPView(self.x, self.data_cntrl.meas_data.y_raw, self.data_cntrl, self.nsamp_view)
         self.cop_plot_settings = []
         # self.liveplot_view = views.LivePlotView(self.x, self.y)
         self.central_layout.addWidget(self.plot_widget)
@@ -75,12 +77,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.run = False
         self.cnt = 0
-        self.nsamp_view = 0
+        # self.nsamp_view = 0
         self.show_every = 1
         self.ref_rate = 10
 
-        view_ranges = [1000, 3000, 6000, 12000]
-        self.nsamp_view_max = view_ranges[2]
         for i, vrange in enumerate(view_ranges):
             nsec = vrange // self.fs
             if nsec >= 60:
@@ -92,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             action.setCheckable(True)
             self.samp_range_view_menu.addAction(action)
             self.samp_range_view_group.addAction(action)
-            if vrange == self.nsamp_view_max:
+            if vrange == self.nsamp_view:
                 action.setChecked(True)
         self.samp_range_view_group.triggered.connect(lambda action: self.set_view_range(int(action.data())))
 
@@ -119,10 +119,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def set_central_widget(self, btn):
         if btn is self.btn_show_liveplot:
-            new_widget = views.LivePlotView(*self.data_cntrl.get_meas(), self.data_cntrl)
+            new_widget = views.LivePlotView(*self.data_cntrl.get_meas(self.nsamp_view), self.data_cntrl, self.nsamp_view)
             self.cop_plot_settings = self.plot_widget.get_settings()
         elif btn is self.btn_show_copplot:
-            new_widget = views.COPView(*self.getDataRaw(), self)
+            new_widget = views.COPView(*self.data_cntrl.get_meas(self.nsamp_view), self.data_cntrl, self.nsamp_view)
             new_widget.update_canvas()
             new_widget.set_settings(self.cop_plot_settings)
         # self.central_layout.removeWidget(self.plot_widget)
@@ -154,10 +154,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def set_autoscale_view(self, val):
         self.autoscale_view = val
         self.plot_widget.set_autoscale(self.autoscale_view)
-        self.plot_widget.update_canvas()
 
     def set_view_range(self, nsamp):
-        self.nsamp_view_max = nsamp
+        self.nsamp_view = nsamp
+        self.plot_widget.nsamp_view = nsamp
 
     def set_refresh_rate(self, refrate):
         print(refrate)
@@ -229,7 +229,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if not self.is_conn:
             return
         self.data_cntrl.clear_data()
-        self.nsamp_view = 0
+        # self.nsamp_view = 0
         self.run = True
         worker = Worker(self.makeMeasurements)  # Any other args, kwargs are passed to the run function
         # self.serial_thread = threading.Thread(target=self.makeMeasurements)
@@ -253,12 +253,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             sep = b.split()
             samples = np.array([int(s) for s in sep], dtype=np.uint16)
             # print(samples)
-            if len(sep) == self.nch:
-                self.cnt += 1
-                if self.cnt > self.nsamp_view_max:
-                    self.nsamp_view = self.nsamp_view_max
-                else:
-                    self.nsamp_view = self.cnt - 1
+            if len(sep) == self.data_cntrl.nchann:
+                # self.cnt += 1
+                # if self.cnt > self.nsamp_view_max:
+                #     self.nsamp_view = self.nsamp_view_max
+                # else:
+                #     self.nsamp_view = self.cnt - 1
                 self.data_cntrl.append_meas(samples)
             else:
                 print('!', samples)
@@ -276,19 +276,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.setWindowTitle(fpath)
             df = pd.read_csv(fpath)
             self.data_cntrl.from_dataframe(df)
-            # print(np.shape(self.y_raw))
             self.plot_widget.update_canvas()
             self.plot_widget.show_slider(0, self.data_cntrl.cnt)
 
     def stopMeasure(self):
+        self.run = False
         self.timer.timeout.disconnect(self.plot_widget.update_canvas)
         self.timer.stop()
         self.meas_time_timer.stop()
-        self.run = False
         # try:
         self.ser.close()
         self.data_cntrl.concatenate_data()
-        self.plot_widget.show_slider(0, self.cnt)
+        self.plot_widget.show_slider(0, self.data_cntrl.cnt)
         self.plot_widget.update_canvas()
         # except:
         #     pass
