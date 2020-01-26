@@ -185,9 +185,13 @@ class CombinedPointCurveHistogramPlot:
     def set_data(self, x, y):
         self.x, self.y = x, y
         if self.autoscale:
-            self.x_lim = np.min(x)//2*2, np.max(x)//2*2 + 2
-            self.y_lim = np.min(y)//2*2, np.max(y)//2*2 + 2
-            # self.x_lim = (self.x_lim[0], self.x_lim[1]+1)
+            xmin, xmax, ymin, ymax = np.min(x), np.max(x), np.min(y), np.max(y)
+            # self.x_lim = np.copysign(np.abs(xmin)//2*2, xmin) - 1, np.copysign(np.abs(xmin)//2*2, xmin) + 1
+            # self.y_lim = np.copysign(np.abs(ymin)//2*2, ymin) - 1, np.copysign(np.abs(ymax)//2*2, ymax) + 1
+            # self.x_lim = np.min(x)//2*2, np.max(x)//2*2 + 2
+            # self.y_lim = np.min(y)//2*2, np.max(y)//2*2 + 2
+            self.x_lim = (xmin - 0.5, xmax + 0.5)
+            self.y_lim = (ymin - 0.5, ymax + 0.5)
         if self._curve_vis:
             self.curve.set_data(x, y)
         if self._hist_vis:
