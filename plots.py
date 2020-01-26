@@ -19,9 +19,9 @@ class LivePlot:
             self.lines.append(line)
         self.lines[0].axes.relim()
         self.lines[0].axes.autoscale_view(True, True, True)
-        ax.set_title('Pomiary')
-        ax.set_xlabel('Numer próbki', ha='center', fontsize=12)
-        ax.set_ylabel('Amplituda', va='center', rotation='vertical', fontsize=12)
+        ax.set_title('Weight distribution')
+        ax.set_xlabel('Time [min:sec]', ha='center', labelpad=10)
+        ax.set_ylabel('Weight [kg]', va='center', rotation='vertical', labelpad=10)
         ax.grid(True, which='major', linestyle='--', linewidth=0.5)
         ax.legend(loc="upper left")
         if self.autoscale:

@@ -200,10 +200,10 @@ class COPView(QWidget):
             # rectangle4 = [0.88, bottom, 0.01, height]
             # rectangle5 = [0.92, bottom, 0.01, height]
             # rectangle6 = [0.96, bottom, 0.01, height]
-            rectangle1 = [0.03, bottom, 0.45, height]
+            rectangle1 = [0.04, bottom, 0.46, height]
             rectangle2 = [0.53, bottom, 0.21, height]
             rectangle3 = [0.77, bottom, 0.21, height]
-            rectangle4 = [0.03, bottom_bar, 0.45, height_bar]
+            rectangle4 = [0.04, bottom_bar, 0.46, height_bar]
             rectangle5 = [0.53, bottom_bar, 0.21, height_bar]
             rectangle6 = [0.77, bottom_bar, 0.21, height_bar]
         else:
@@ -264,6 +264,14 @@ class COPView(QWidget):
         self.plot_COP_right = plots.CombinedPointCurveHistogramPlot(self._ax_COP_right, y[0], y[0], self.x_lim_lr, self.y_lim_lr, hist_size_lr,
                                                                y_hist_offset_lr, show_bar=show_bars, bar_ax=self._ax_color_bar_r,
                                                                     title='COP right', autoscale=self.autoscale)
+        self.fig.text(0.028, 0.075, '[cm]', ha='right')
+        self.fig.text(0.003, 0.1, '[cm]', va='bottom', rotation='vertical')
+        # self._ax_COP_global.set_xlabel('[cm]', ha='right', x=0.0, labelpad=-10)
+        # self._ax_COP_global.set_ylabel('[cm]', va='top', y=0.02, labelpad=0)
+        # self._ax_COP_left.set_xlabel('[cm]', ha='right', x=0.0, labelpad=-10)
+        # self._ax_COP_left.set_ylabel('[cm]', va='top', y=0.02, labelpad=-10)
+        # self._ax_COP_right.set_xlabel('[cm]', ha='right', x=0.0, labelpad=-10)
+        # self._ax_COP_right.set_ylabel('[cm]', va='top', y=0.02, labelpad=-10)
         self.fig.canvas.draw()
         # self.slider.setDrawValues(False)
         # self.slider.setBackgroundStyle('background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #222, stop:1 #333);')
