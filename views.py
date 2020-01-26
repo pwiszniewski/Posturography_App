@@ -57,7 +57,7 @@ class LivePlotView(QWidget):
         chnames = ['P|PIĘTA', 'P|ZEW', 'P|WEW', 'L|PIĘTA', 'L|ZEW', 'L|WEW']
         colors = ['#e866c5', 'g', 'b', '#d466e8', 'orange', '#fff740']
         self.nsamp_view = nsamp_view
-        self.y_lim = (0, 500)
+        self.y_lim = (0, 50)
         self.autoscale = autoscale
         self.plot = plots.LivePlot(self._dynamic_ax, self.x, self.y, nch, self.y_lim, colors, chnames, self.autoscale)
 
@@ -110,8 +110,10 @@ class LivePlotView(QWidget):
         self.plot.set_autoscale(val)
         if not self.autoscale:
             self.plot.set_y_lim(self.y_lim)
-        self.update_canvas()
-
+        try:
+            self.update_view_range()
+        except:
+            self.update_canvas()
 
     # def startUpdating(self):
     #     self._timer.start()
@@ -365,7 +367,11 @@ class COPView(QWidget):
             self.plot_COP_global.set_xy_lim(self.x_lim_g, self.y_lim_g)
             self.plot_COP_left.set_xy_lim(self.x_lim_lr, self.y_lim_lr)
             self.plot_COP_right.set_xy_lim(self.x_lim_lr, self.y_lim_lr)
-        self.update_canvas()
+        try:
+            self.update_view_range()
+        except:
+            self.update_canvas()
+
 
     # def show_slider(self):
     #     self.slider = widgets.QRangeSlider()
