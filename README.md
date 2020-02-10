@@ -2,5 +2,6 @@
 Application for testing human posture
 ## About
 
-## Screenshot
-![Screenshot of app](img/screen.png)
+## Screenshots
+![Screenshot of app](img/screen1.png)
+![Screenshot of app](img/screen2.png)
