@@ -54,7 +54,7 @@ class LivePlotView(QWidget):
         self.x = x
         self.y = y
 
-        chnames = ['P|PIĘTA', 'P|ZEW', 'P|WEW', 'L|PIĘTA', 'L|ZEW', 'L|WEW']
+        chnames = ['R|HEEL', 'R|EXT', 'R|INT', 'L|HEEL', 'L|EXT', 'L|INT']
         colors = ['#e866c5', 'g', 'b', '#d466e8', 'orange', '#fff740']
         self.nsamp_view = nsamp_view
         self.y_lim = (0, 50)
@@ -237,7 +237,7 @@ class COPView(QWidget):
 
         self.nsamp_view = nsamp_view
 
-        hist_size_lr = [9, 9]
+        hist_size_lr = [9, 19]
         x_min_lr, x_max_lr = -10, 10
         y_min_lr, y_max_lr = -10, 10
         y_hist_offset_lr = 0 #-20
