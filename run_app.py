@@ -17,8 +17,8 @@ import numpy as np
 import views
 import data
 import pandas as pd
-import widgets
 import protocols
+import measurements
 
 import threading
 
@@ -56,9 +56,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.saveAction.triggered.connect(self.save_data_csv)
         self.openAction.triggered.connect(self.open_data_csv)
 
-        self.btn_start_measure.triggered.connect(self.startMeasure)
+        self.btn_start_measure.triggered.connect(self.start_measure)
         # self.btn_start_measure.setCheckable(True)
-        self.btn_stop_measure.triggered.connect(self.stopMeasure)
+        self.btn_stop_measure.triggered.connect(self.stop_measure)
 
         self.btn_show_liveplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_liveplot))
         self.btn_show_copplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_copplot))
@@ -73,13 +73,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ser = None
         self.port = None
         self.is_conn = False
-        self.search_connection()
+        # self.search_connection()
 
         self.run = False
         self.cnt = 0
         # self.nsamp_view = 0
         self.show_every = 1
         self.ref_rate = 10
+
+        self.meas_worker = None
 
         for i, vrange in enumerate(view_ranges):
             nsec = vrange // self.fs
@@ -113,9 +115,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.autscale_action.triggered.connect(self.set_autoscale_view)
 
         self.meas_time_timer = QTimer(self)
-        self.meas_time_timer.timeout.connect(self.showTime)
+        self.meas_time_timer.timeout.connect(self.update_meas_time)
         self.meas_start_time = QTime.currentTime()
-        self.showTime()
+        self.update_meas_time()
 
     def set_central_widget(self, btn):
         if btn is self.btn_show_liveplot:
@@ -165,104 +167,96 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
 
-    def search_connection(self):
-        port_list = protocols.get_ports_list()
-        if len(port_list) == 1:
-            self.port = port_list[0]
-            self.is_conn = self.try_connect()
-        elif len(port_list) > 1:
-            for port in port_list:
-                self.port = port
-                self.is_conn = self.try_connect()
-                if self.is_conn:
-                    break
-        else:
-            self.port = None
+    # def search_connection(self):
+    #     port_list = protocols.get_ports_list()
+    #     if len(port_list) == 1:
+    #         self.port = port_list[0]
+    #         self.is_conn = self.try_connect()
+    #     elif len(port_list) > 1:
+    #         for port in port_list:
+    #             self.port = port
+    #             self.is_conn = self.try_connect()
+    #             if self.is_conn:
+    #                 break
+    #     else:
+    #         self.port = None
+    #
+    #     if self.is_conn:
+    #         self.ser.close()
+    #
+    #     for act in self.port_act_group.actions():
+    #         self.port_act_group.removeAction(act)
+    #         self.port_sel_menu.removeAction(act)
+    #
+    #     for port in port_list:
+    #         action = QAction(port)
+    #         action.setCheckable(True)
+    #         self.port_sel_menu.addAction(action)
+    #         self.port_act_group.addAction(action)
+    #         if port == self.port:
+    #             action.setChecked(True)
+    #         # action.triggered.connect(lambda item=action.text(): self.set_port(action.text()))
+    #     self.port_act_group.triggered.connect(lambda action: self.set_port(action.text()))
 
-        if self.is_conn:
-            self.ser.close()
-
-        for act in self.port_act_group.actions():
-            self.port_act_group.removeAction(act)
-            self.port_sel_menu.removeAction(act)
-
-        for port in port_list:
-            action = QAction(port)
-            action.setCheckable(True)
-            self.port_sel_menu.addAction(action)
-            self.port_act_group.addAction(action)
-            if port == self.port:
-                action.setChecked(True)
-            # action.triggered.connect(lambda item=action.text(): self.set_port(action.text()))
-        self.port_act_group.triggered.connect(lambda action: self.set_port(action.text()))
-
-        # if self.port is not None:
-
-    def try_connect(self):
-        result = False
-        if self.port is not None:
-            try:
-                self.ser = serial.Serial(self.port, 115200)  # COM4
-                self.statusbar_right_lbl.setText(self.ser.portstr)
-                result = True
-            except serial.SerialException as e:
-                self.statusbar_right_lbl.setText(str(e).split(':')[0])
-        else:
-            self.statusbar_right_lbl.setText('no ports available')
-            print('no ports available')
-        print('result', result)
-        return result
+    # def try_connect(self):
+    #     result = False
+    #     if self.port is not None:
+    #         try:
+    #             self.ser = serial.Serial(self.port, 115200)  # COM4
+    #             self.statusbar_right_lbl.setText(self.ser.portstr)
+    #             result = True
+    #         except serial.SerialException as e:
+    #             self.statusbar_right_lbl.setText(str(e).split(':')[0])
+    #     else:
+    #         self.statusbar_right_lbl.setText('no ports available')
+    #         print('no ports available')
+    #     print('result', result)
+    #     return result
 
     def set_port(self, port):
         print(port)
         self.port = port
         self.is_conn = self.try_connect()
 
-    def startMeasure(self):
-        print(self.port, self.is_conn)
-        if not self.is_conn:
-            self.search_connection()
+    def start_measure(self):
+        # print(self.port, self.is_conn)
+        # if not self.is_conn:
+        #     self.search_connection()
 
-        self.is_conn = self.try_connect()
-        print(self.port, self.is_conn)
+        # self.is_conn = self.try_connect()
+        # print(self.port, self.is_conn)
 
-        if not self.is_conn:
-            return
+        # if not self.is_conn:
+        #     return
+
         self.data_cntrl.clear_data()
         # self.nsamp_view = 0
         self.run = True
-        worker = Worker(self.makeMeasurements)  # Any other args, kwargs are passed to the run function
+        self.meas_worker = measurements.MeasurementWorker(self.data_cntrl)
         # self.serial_thread = threading.Thread(target=self.makeMeasurements)
         self.plot_widget.hide_slider()
         self.timer.timeout.connect(self.plot_widget.update_canvas)
         # Execute
         # self.serial_thread.start()
-        self.threadpool.start(worker)
+        self.threadpool.start(self.meas_worker)
         self.timer.start(int(1000 / self.ref_rate))
         self.meas_time_timer.start(1000)
+        self.meas_start_time = QTime.currentTime()
         self.setWindowTitle('Making measurements')
         # self.central_widget.startUpdating()
 
-    def makeMeasurements(self):
-        self.meas_start_time = QTime.currentTime()
-        self.ser.flushInput()
-        self.ser.readline()
-        while self.run:
-            ''' Read and add '''
-            b = self.ser.readline()  # read a byte string
-            sep = b.split()
-            samples = np.array([int(s) for s in sep], dtype=np.uint16)
-            # print(samples)
-            if len(sep) == self.data_cntrl.nchann:
-                # self.cnt += 1
-                # if self.cnt > self.nsamp_view_max:
-                #     self.nsamp_view = self.nsamp_view_max
-                # else:
-                #     self.nsamp_view = self.cnt - 1
-                self.data_cntrl.append_meas(samples)
-            else:
-                print('!', samples)
-                self.ser.flushInput()
+    def stop_measure(self):
+        self.run = False
+        self.timer.timeout.disconnect(self.plot_widget.update_canvas)
+        self.timer.stop()
+        self.meas_time_timer.stop()
+        # try:
+        self.meas_worker.stop()
+        self.data_cntrl.concatenate_data()
+        self.plot_widget.show_slider(0, self.data_cntrl.cnt)
+        self.plot_widget.update_canvas()
+        # except:
+        #     pass
 
     def save_data_csv(self):
         fpath = QFileDialog.getSaveFileName(self, 'Save File', '', "CSV files (*.csv)")[0]
@@ -279,20 +273,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.plot_widget.update_canvas()
             self.plot_widget.show_slider(0, self.data_cntrl.cnt)
 
-    def stopMeasure(self):
-        self.run = False
-        self.timer.timeout.disconnect(self.plot_widget.update_canvas)
-        self.timer.stop()
-        self.meas_time_timer.stop()
-        # try:
-        self.ser.close()
-        self.data_cntrl.concatenate_data()
-        self.plot_widget.show_slider(0, self.data_cntrl.cnt)
-        self.plot_widget.update_canvas()
-        # except:
-        #     pass
-
-    def showTime(self):
+    def update_meas_time(self):
         seconds = self.meas_start_time.secsTo(QTime.currentTime())
         time = QTime().fromMSecsSinceStartOfDay(1000*seconds)
         # text = str(time) #time.toString('mm:ss')
@@ -300,38 +281,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.measure_time_label.setText(text)
         # self.measure_time_label.display(text)
 
-    def closeEvent(self, event):
-        self.run = False
-        try:
-            self.central_widget.close()
-        except:
-            pass
-
-class Worker(QRunnable):
-    def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
-
-        # Store constructor arguments (re-used for processing)
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-
-        # Add the callback to our kwargs
-        # self.kwargs['progress_callback'] = self.signals.progress
-
-    @Slot()
-    def run(self):
-        # Retrieve args/kwargs here; and fire processing using them
-        try:
-            result = self.fn(*self.args, **self.kwargs)
-        except:
-            traceback.print_exc()
-        #     exctype, value = sys.exc_info()[:2]
-        #     self.signals.error.emit((exctype, value, traceback.format_exc()))
-        # else:
-        #     self.signals.result.emit(result)  # Return the result of the processing
-        # finally:
-        #     self.signals.finished.emit()  # Done
+    # def closeEvent(self, event):
+    #     self.run = False
+    #     try:
+    #         self.central_widget.close()
+    #     except:
+    #         pass
 
 if __name__ == "__main__":
     import sys
