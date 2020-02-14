@@ -10,14 +10,26 @@ class MesurementController():
         self.meas_worker = None
         self.threadpool = QThreadPool()
 
+    def set_port(self, port):
+        self.port = port
+
     def connect(self):
         self.meas_worker = MeasurementWorker(self.data_cntrl, self.port, self.baudrate)
 
     def start_measure(self):
+        # if not self.is_conn:
+        #     self.search_connection()
+
+        # self.is_conn = self.try_connect()
+        # print(self.port, self.is_conn)
+
+        # if not self.is_conn:
+        #     return
         self.threadpool.start(self.meas_worker)
 
     def stop_measure(self):
         self.meas_worker.stop()
+
 
 class MeasurementWorker(QRunnable):
     def __init__(self, data_cntrl, port, baud_rate, *args, **kwargs):

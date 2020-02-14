@@ -58,18 +58,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.timer = QTimer()
 
-        self.ser = None
-        self.port = 'COM8'
-        self.is_conn = False
+        port = 'COM8'
         baudrate = 115200
-        # self.search_connection()
 
         self.run = False
-        self.cnt = 0
-        self.show_every = 1
         self.ref_rate = 10
 
-        self.meas_cntrl = measurements.MesurementController(self.data_cntrl, self.port, baudrate)
+        self.meas_cntrl = measurements.MesurementController(self.data_cntrl, port, baudrate)
 
         for i, vrange in enumerate(view_ranges):
             nsec = vrange // self.fs
@@ -154,22 +149,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ref_rate = refrate
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
+
     def set_port(self, port):
-        print(port)
-        self.port = port
-        self.is_conn = self.try_connect()
+        self.meas_cntrl.set_port(port)
 
     def start_measure(self):
-        # print(self.port, self.is_conn)
-        # if not self.is_conn:
-        #     self.search_connection()
-
-        # self.is_conn = self.try_connect()
-        # print(self.port, self.is_conn)
-
-        # if not self.is_conn:
-        #     return
-
         self.data_cntrl.clear_data()
         self.run = True
         self.meas_cntrl.connect()
