@@ -2,12 +2,29 @@ from PySide2.QtCore import *
 import serial
 import numpy as np
 
+class MesurementController():
+    def __init__(self, data_cntrl, port=None, baudrate=None):
+        self.data_cntrl = data_cntrl
+        self.port = port
+        self.baudrate = baudrate
+        self.meas_worker = None
+        self.threadpool = QThreadPool()
+
+    def connect(self):
+        self.meas_worker = MeasurementWorker(self.data_cntrl, self.port, self.baudrate)
+
+    def start_measure(self):
+        self.threadpool.start(self.meas_worker)
+
+    def stop_measure(self):
+        self.meas_worker.stop()
+
 class MeasurementWorker(QRunnable):
-    def __init__(self, data_cntrl, *args, **kwargs):
+    def __init__(self, data_cntrl, port, baud_rate, *args, **kwargs):
         super(MeasurementWorker, self).__init__()
         self.data_cntrl = data_cntrl
-        self.port = 'COM8'
-        self.ser = serial.Serial(self.port, 115200)
+        self.port = port
+        self.ser = serial.Serial(self.port, baud_rate)
         self.is_run = False
         # # Store constructor arguments (re-used for processing)
         # self.fn = fn

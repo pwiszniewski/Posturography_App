@@ -26,7 +26,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, *args, obj=None, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
-        self.threadpool = QThreadPool()
+
         # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
         self.nsamp = 12000
@@ -71,8 +71,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.addToolBar(NavigationToolbar(static_canvas, self))
 
         self.ser = None
-        self.port = None
+        self.port = 'COM8'
         self.is_conn = False
+        baudrate = 115200
         # self.search_connection()
 
         self.run = False
@@ -81,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.show_every = 1
         self.ref_rate = 10
 
-        self.meas_worker = None
+        self.meas_cntrl = measurements.MesurementController(self.data_cntrl, self.port, baudrate)
 
         for i, vrange in enumerate(view_ranges):
             nsec = vrange // self.fs
@@ -230,15 +231,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #     return
 
         self.data_cntrl.clear_data()
-        # self.nsamp_view = 0
         self.run = True
-        self.meas_worker = measurements.MeasurementWorker(self.data_cntrl)
+        self.meas_cntrl.connect()
         # self.serial_thread = threading.Thread(target=self.makeMeasurements)
         self.plot_widget.hide_slider()
         self.timer.timeout.connect(self.plot_widget.update_canvas)
         # Execute
         # self.serial_thread.start()
-        self.threadpool.start(self.meas_worker)
+        self.meas_cntrl.start_measure()
         self.timer.start(int(1000 / self.ref_rate))
         self.meas_time_timer.start(1000)
         self.meas_start_time = QTime.currentTime()
@@ -251,7 +251,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer.stop()
         self.meas_time_timer.stop()
         # try:
-        self.meas_worker.stop()
+        self.meas_cntrl.stop_measure()
         self.data_cntrl.concatenate_data()
         self.plot_widget.show_slider(0, self.data_cntrl.cnt)
         self.plot_widget.update_canvas()
