@@ -48,13 +48,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.openAction.triggered.connect(self.open_data_csv)
 
         self.btn_start_measure.triggered.connect(self.start_measure)
-        # self.btn_start_measure.setCheckable(True)
         self.btn_stop_measure.triggered.connect(self.stop_measure)
 
         self.btn_show_liveplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_liveplot))
         self.btn_show_copplot.triggered.connect(lambda: self.set_central_widget(self.btn_show_copplot))
-
-        # self.btn = QPushButton("Liveplot")
 
         self.timer = QTimer()
 
@@ -157,30 +154,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.data_cntrl.clear_data()
         self.run = True
         self.meas_cntrl.connect()
-        # self.serial_thread = threading.Thread(target=self.makeMeasurements)
         self.plot_widget.hide_slider()
         self.timer.timeout.connect(self.plot_widget.update_canvas)
-        # Execute
-        # self.serial_thread.start()
         self.meas_cntrl.start_measure()
         self.timer.start(int(1000 / self.ref_rate))
         self.meas_time_timer.start(1000)
         self.meas_start_time = QTime.currentTime()
         self.setWindowTitle('Making measurements')
-        # self.central_widget.startUpdating()
 
     def stop_measure(self):
         self.run = False
         self.timer.timeout.disconnect(self.plot_widget.update_canvas)
         self.timer.stop()
         self.meas_time_timer.stop()
-        # try:
         self.meas_cntrl.stop_measure()
         self.data_cntrl.concatenate_data()
         self.plot_widget.show_slider(0, self.data_cntrl.cnt)
         self.plot_widget.update_canvas()
-        # except:
-        #     pass
 
     def save_data_csv(self):
         fpath = QFileDialog.getSaveFileName(self, 'Save File', '', "CSV files (*.csv)")[0]
@@ -200,10 +190,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def update_meas_time(self):
         seconds = self.meas_start_time.secsTo(QTime.currentTime())
         time = QTime().fromMSecsSinceStartOfDay(1000*seconds)
-        # text = str(time) #time.toString('mm:ss')
         text = time.toString('mm:ss')
         self.measure_time_label.setText(text)
-        # self.measure_time_label.display(text)
 
     # def closeEvent(self, event):
     #     self.run = False
