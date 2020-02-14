@@ -27,20 +27,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setupUi(self)
 
-        # print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
-
         self.nsamp = 12000
         self.nch = 6
         self.fs = 100
         view_ranges = [1000, 3000, 6000, 12000]
         self.nsamp_view = view_ranges[2]
-        # self.t_data = data.TimesData()
-        # self.meas_data = data.MeasurementsData(nch)
-        # self.cop_data = data.CopData(nsamp)
-
-        # self.t_data = data.TimesData(self.nsamp)
-        # self.meas_data = data.MeasurementsData(self.nch, self.nsamp)
-        # self.cop_data = data.CopData(self.nsamp)
 
         self.data_cntrl = data.DataController(self.nch, self.nsamp, self.fs)
 
@@ -66,9 +57,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.btn = QPushButton("Liveplot")
 
         self.timer = QTimer()
-        # static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        # layout.addWidget(static_canvas)
-        # self.addToolBar(NavigationToolbar(static_canvas, self))
 
         self.ser = None
         self.port = 'COM8'
@@ -78,7 +66,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.run = False
         self.cnt = 0
-        # self.nsamp_view = 0
         self.show_every = 1
         self.ref_rate = 10
 
@@ -167,53 +154,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ref_rate = refrate
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
-
-    # def search_connection(self):
-    #     port_list = protocols.get_ports_list()
-    #     if len(port_list) == 1:
-    #         self.port = port_list[0]
-    #         self.is_conn = self.try_connect()
-    #     elif len(port_list) > 1:
-    #         for port in port_list:
-    #             self.port = port
-    #             self.is_conn = self.try_connect()
-    #             if self.is_conn:
-    #                 break
-    #     else:
-    #         self.port = None
-    #
-    #     if self.is_conn:
-    #         self.ser.close()
-    #
-    #     for act in self.port_act_group.actions():
-    #         self.port_act_group.removeAction(act)
-    #         self.port_sel_menu.removeAction(act)
-    #
-    #     for port in port_list:
-    #         action = QAction(port)
-    #         action.setCheckable(True)
-    #         self.port_sel_menu.addAction(action)
-    #         self.port_act_group.addAction(action)
-    #         if port == self.port:
-    #             action.setChecked(True)
-    #         # action.triggered.connect(lambda item=action.text(): self.set_port(action.text()))
-    #     self.port_act_group.triggered.connect(lambda action: self.set_port(action.text()))
-
-    # def try_connect(self):
-    #     result = False
-    #     if self.port is not None:
-    #         try:
-    #             self.ser = serial.Serial(self.port, 115200)  # COM4
-    #             self.statusbar_right_lbl.setText(self.ser.portstr)
-    #             result = True
-    #         except serial.SerialException as e:
-    #             self.statusbar_right_lbl.setText(str(e).split(':')[0])
-    #     else:
-    #         self.statusbar_right_lbl.setText('no ports available')
-    #         print('no ports available')
-    #     print('result', result)
-    #     return result
-
     def set_port(self, port):
         print(port)
         self.port = port
