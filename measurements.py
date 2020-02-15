@@ -2,6 +2,7 @@ from PySide2.QtCore import *
 import serial
 import numpy as np
 
+
 class MesurementController():
     def __init__(self, data_cntrl, port=None, baudrate=None):
         self.data_cntrl = data_cntrl
