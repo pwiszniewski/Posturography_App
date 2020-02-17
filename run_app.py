@@ -61,7 +61,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.run = False
         self.ref_rate = 10
 
-        self.meas_cntrl = measurements.MesurementController(self.data_cntrl, port, baudrate)
+        self.meas_cntrl = measurements.MesurementController(self.data_cntrl, port, baudrate=baudrate)
+        self.update_available_serial_ports()
 
         for i, vrange in enumerate(view_ranges):
             nsec = vrange // self.fs
@@ -146,6 +147,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ref_rate = refrate
         if self.run:
             self.timer.setInterval(1000 / self.ref_rate)
+
+    def update_available_serial_ports(self):
+        print('update_available_serial_ports')
+        available_ports = self.meas_cntrl.get_available_serial_ports()
+
+        for act in self.port_act_group.actions():
+            self.port_act_group.removeAction(act)
+            self.port_sel_menu.removeAction(act)
+
+        if len(available_ports) > 0:
+            for port in available_ports:
+                action = QAction(port)
+                action.setCheckable(True)
+                self.port_sel_menu.addAction(action)
+                self.port_act_group.addAction(action)
+                if port == self.meas_cntrl.port:
+                    action.setChecked(True)
+            self.port_act_group.triggered.connect(lambda action: self.set_port(action.text()))
+        else:
+            self.statusbar_right_lbl.setText('no ports available')
 
     def set_port(self, port):
         self.meas_cntrl.set_port(port)
