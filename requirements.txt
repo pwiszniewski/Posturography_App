@@ -1,8 +1,8 @@
-﻿altgraph==0.16.1
+altgraph==0.16.1
 Click==7.0
 cycler==0.10.0
 Cython==0.29.14
-future==0.18.2
+future==0.18.3
 kiwisolver==1.1.0
 matplotlib==3.1.2
 numpy==1.22.0
