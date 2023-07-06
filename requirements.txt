@@ -1,4 +1,4 @@
-﻿altgraph==0.16.1
+altgraph==0.16.1
 Click==7.0
 cycler==0.10.0
 Cython==0.29.14
@@ -15,6 +15,6 @@ python-dateutil==2.8.1
 python-dotenv==0.10.3
 pytz==2019.3
 pywin32-ctypes==0.2.0
-scipy==1.4.1
+scipy==1.10.0
 shiboken2==5.14.0
 six==1.13.0
